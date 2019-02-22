@@ -1,0 +1,115 @@
+# RabbitMQ ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: plugins
+  namespace: rabbit-mq
+data:
+  enabled_plugins: "[rabbitmq_federation_management,rabbitmq_management,rabbitmq_mqtt,rabbitmq_stomp,rabbitmq_sharding,rabbitmq_consistent_hash_exchange,rabbitmq_peer_discovery_k8s]."
+---
+# RabbitMQ Service - Decision-Inventory
+apiVersion: v1
+kind: Service
+             memory: 8Gi
+         env:
+         - name: RABBITMQ_DEFAULT_USER
+-          valueFrom: 
++          valueFrom:
+             secretKeyRef:
+               name: rabbit-user
+               key: user
+         - name: RABBITMQ_DEFAULT_PASS
+-          valueFrom: 
++          valueFrom:
+             secretKeyRef:
+               name: rabbit-user
+               key: password
+         - name: RABBITMQ_ERLANG_COOKIE
+-          valueFrom: 
++          valueFrom:
+             secretKeyRef:
+               name: rabbit-cookie
+               key: cookie
+         - name: RABBITMQ_VM_MEMORY_HIGH_WATERMARK
+           value: 7GiB
++        - name: RABBITMQ_ENABLED_PLUGINS_FILE
++          value: /app/rabbitmq/enabled_plugins
+         ports:
+         - containerPort: 5672   # AMQP
+         - containerPort: 15672  # Management
++        volumeMounts:
++          - name: rabbitmq-plugins
++            mountPath: /app/rabbitmq
++      volumes:
++        - name: rabbitmq-plugins
++          configMap:
++            name: plugins
++            items:
++              - key: enabled_plugins
++                path: enabled_plugins
+       # Need to fix this, looks like non-root user trouble again
+       #   volumeMounts:
+       #   - mountPath: /var/lib/rabbitmq/mnesia/rabbit@rabbit-mq-decision-inventory
+@@ -132,25 +152,38 @@ spec:
+             memory: 8Gi
+         env:
+         - name: RABBITMQ_DEFAULT_USER
+-          valueFrom: 
++          valueFrom:
+             secretKeyRef:
+               name: rabbit-user
+               key: user
+         - name: RABBITMQ_DEFAULT_PASS
+-          valueFrom: 
++          valueFrom:
+             secretKeyRef:
+               name: rabbit-user
+               key: password
+         - name: RABBITMQ_ERLANG_COOKIE
+-          valueFrom: 
++          valueFrom:
+             secretKeyRef:
+               name: rabbit-cookie
+               key: cookie
+         - name: RABBITMQ_VM_MEMORY_HIGH_WATERMARK
+           value: 7GiB
++        - name: RABBITMQ_ENABLED_PLUGINS_FILE
++          value: /app/rabbitmq/enabled_plugins
+         ports:
+         - containerPort: 5672   # AMQP
+         - containerPort: 15672  # Management
++        volumeMounts:
++          - name: rabbitmq-plugins
++            mountPath: /app/rabbitmq
++      volumes:
++        - name: rabbitmq-plugins
++          configMap:
++            name: plugins
++            items:
++              - key: enabled_plugins
++                path: enabled_plugins
++
+       # Need to fix this, looks like non-root user trouble again
+       #   volumeMounts:
+       #   - mountPath: /var/lib/rabbitmq/mnesia/rabbit@rabbit-mq-store-inventory
+-208,17 +241,17 spec:
+             memory: 8Gi
+         env:
+         - name: RABBITMQ_DEFAULT_USER
+-          valueFrom: 
++          valueFrom:
+             secretKeyRef:
+               name: rabbit-user
+               key: user
+         - name: RABBITMQ_DEFAULT_PASS
+-          valueFrom: 
++          valueFrom:
+             secretKeyRef:
+               name: rabbit-user
+               key: password
+         - name: RABBITMQ_ERLANG_COOKIE
+-          valueFrom: 
++          valueFrom:
+             secretKeyRef:
+               name: rabbit-cookie
+               key: cookie
